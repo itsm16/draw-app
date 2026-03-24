@@ -8,6 +8,12 @@ app.get("/", (req, res)=>{
    }) 
 })
 
+app.get("/health-check", (req, res)=>{
+    res.json({
+    message: "health run"
+   }) 
+})
+
 app.listen(3000, ()=>{
     console.log("running on")
 })
