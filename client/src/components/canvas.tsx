@@ -1,9 +1,13 @@
 import rough from 'roughjs'
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
+  const [isDragging, setDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [lastViewport, setLastViewport] = useState({ x: 0, y: 0, zoom: 1 });
+
   // dragstart - x, y , lastview port - x,y
 
   const draw = () => {
@@ -40,15 +44,49 @@ function Canvas() {
   }, [draw])
 
   const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
+    // e.preventDefault();
     const zoomSpeed = 0.001;
     const newZoom = Math.max(0.1, Math.min(5, viewport.zoom - e.deltaY * zoomSpeed));
     setViewport(prev => ({ ...prev, zoom: newZoom }));
+    
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if(e.button === 0) {
+      setDragging(true);
+      setDragStart({x: e.clientX, y: e.clientY});
+      setLastViewport({x: viewport.x, y: viewport.y, zoom: viewport.zoom});
+    }
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.style.cursor = 'grabbing';
+    }
+  };
+
+  const onMouseMove = (e: React.MouseEvent) =>{
+    e.preventDefault();
+    if(isDragging){
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      setViewport({x: lastViewport.x + deltaX, y: lastViewport.y + deltaY, zoom: lastViewport.zoom});
+    }
+  }
+
+  const onMouseUp = () => {
+    setDragging(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.style.cursor = 'grab';
+    }
   };
 
   return (
     <canvas ref={canvasRef} id="canvas" className="bg-white h-screen w-screen"
     onWheel={handleWheel}
+    onMouseDown={onMouseDown}
+    onMouseMove={onMouseMove}
+    onMouseUp={onMouseUp}
     />
   )
 }
