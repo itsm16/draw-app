@@ -13,14 +13,14 @@ function Canvas() {
       shape: 'rectangle',
       x: 10,
       y: 10,
-      width: 200,
+      width: 300,
       height: 200,
       fill: '',
     },
     {
       id: 2,
       shape: 'circle',
-      x: 300,
+      x: 400,
       y: 100,
       width: 100,
       height: 100,
@@ -30,20 +30,29 @@ function Canvas() {
       shape: 'rectangle',
       x: 10,
       y: 300,
-      width: 200,
+      width: 300,
       height: 200,
       fill: 'lightblue',
     },
     {
       id: 4,
       shape: 'circle',
-      x: 300,
+      x: 400,
       y: 300,
       width: 100,
       height: 100,
       fill: 'lightblue',
     },
-    
+    {
+      id: 5,
+      shape: 'line',
+      x: 30,
+      y: 530,
+      width: 300,
+      height: 200,
+      fill: 'lightgreen',
+    },
+
     // {
     //   id: 3,
     //   shape: 'arrow',
@@ -121,6 +130,19 @@ function Canvas() {
         );
       }
 
+      if (item.shape === 'line') {
+        rc.line(
+          item.x,
+          item.y,
+          item.x + item.width,
+          item.y + item.height,
+          {
+            stroke: 'white',
+            roughness,
+            seed
+          }
+        );
+      }
       
       // if(item.shape === 'arrow') {
       //   rc.line(
