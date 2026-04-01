@@ -1,5 +1,7 @@
 import rough from 'roughjs'
 import React, { useEffect, useRef, useState } from 'react'
+import { writeText } from '../utils/draw.utils';
+import useToolStore from '../store/toolStore';
 
 function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -7,6 +9,11 @@ function Canvas() {
   const [isDragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [lastViewport, setLastViewport] = useState({ x: 0, y: 0, zoom: 1 });
+
+  // zustand tools
+  const {setTool} = useToolStore(state => state)
+
+
   const [data, setData] = useState([
     {
       id: 1,
@@ -99,6 +106,19 @@ function Canvas() {
 
     const rc = rough.canvas(canvas);
 
+    rc.polygon([
+      [100, 140],  // Top vertex
+      [106, 150], // Bottom right
+      [94, 150]   // Bottom left
+    ], {seed: 10, stroke: 'white'});
+    rc.line(100, 148, 100, 200, {seed: 10, stroke: 'white', roughness: 0.7});
+
+    rc.line(650, 150, 650, 250, {seed: 10, stroke: 'white', roughness: 0.9});
+    rc.line(650, 150, 660, 160, {seed: 10, stroke: 'white', roughness: 1.3});
+    rc.line(650, 150, 640, 160, {seed: 10, stroke: 'white', roughness: 1.3});
+    
+    writeText({ctx, text: "My name is Barry Allen and I'm the fastest man alive", x: 800, y: 100});
+
     data.forEach((item) => {
       let seed = 10;
       let roughness = 1.5;
@@ -170,7 +190,12 @@ function Canvas() {
     canvas.height = window.innerHeight;
     canvas.style.overflow = 'hidden';
     
-    draw();
+    const loadAndDraw = async () => {
+      await document.fonts.load('20px "Architects Daughter"');
+      draw();
+    };
+
+    loadAndDraw();
   }, [draw])
 
   const handleWheel = (e: React.WheelEvent) => {
