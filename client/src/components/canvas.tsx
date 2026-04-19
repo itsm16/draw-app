@@ -9,12 +9,31 @@ function Canvas() {
   const [isDragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [lastViewport, setLastViewport] = useState({ x: 0, y: 0, zoom: 1 });
+  const [isVisible, setIsVisible] = useState(false);
+  const [textInputPosition, setTextInputPosition] = useState({ x: 0, y: 0 });
+  const [inputValue, setInputValue] = useState('');
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   // zustand tools
   const {setTool} = useToolStore(state => state)
 
+  type DataItem = {
+    id: number;
+    shape: 'rectangle' | 'circle' | 'text' | 'line';
+    x: number;
+    y: number;
+    width?: number;
+    height?: number;
+    diameter?: number;
+    fill?: string;
+    text?: string;
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+  };
 
-  const [data, setData] = useState([
+  const [data, setData] = useState<DataItem[]>([
     {
       id: 1,
       shape: 'rectangle',
@@ -90,19 +109,6 @@ function Canvas() {
     
     // there will be drawings here / loop through drawings
     // from local storage or database , held by useState / zustand
-    
-    // data.forEach((item) => {
-    //   if(item.shape === 'rectangle') {
-    //     ctx.strokeRect(item.x, item.y, item.width, item.height);
-    //   }
-    // });
-    // ctx.roundRect(230, 10, 200, 100, [10, 40, 0, 30]);
-
-    
-    // // Start a new path
-    // ctx.beginPath();
-    // ctx.roundRect(300, 50, 200, 100, 8);
-    // ctx.stroke();
 
     const rc = rough.canvas(canvas);
 
@@ -117,7 +123,7 @@ function Canvas() {
     rc.line(650, 150, 660, 160, {seed: 10, stroke: 'white', roughness: 1.3});
     rc.line(650, 150, 640, 160, {seed: 10, stroke: 'white', roughness: 1.3});
     
-    writeText({ctx, text: "My name is Barry Allen and I'm the fastest man alive", x: 800, y: 100});
+    writeText({ctx, text: "Give it a sketchy touch", x: 800, y: 100});
 
     data.forEach((item) => {
       let seed = 10;
@@ -126,8 +132,8 @@ function Canvas() {
         rc.rectangle(
           item.x,
           item.y,
-          item.width,
-          item.height,
+          item.width || 100,
+          item.height || 100,
           {
             stroke: 'white',
             fill: item.fill ? item.fill : "",
@@ -140,7 +146,7 @@ function Canvas() {
         rc.circle(
           item.x,
           item.y,
-          item.width,
+          item.width || 50,
           {
             fill: item.fill ? item.fill : "",
             stroke: 'white',
@@ -154,14 +160,18 @@ function Canvas() {
         rc.line(
           item.x,
           item.y,
-          item.x + item.width,
-          item.y + item.height,
+          item.x + (item.width || 100),
+          item.y + (item.height || 100),
           {
             stroke: 'white',
             roughness,
             seed
           }
         );
+      }
+      
+      if (item.shape === 'text') {
+        writeText({ctx, text: item.text || "", x: item.x, y: item.y});
       }
       
       // if(item.shape === 'arrow') {
@@ -232,17 +242,100 @@ function Canvas() {
     setDragging(false);
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.style.cursor = 'grab';
+      canvas.style.cursor = '';
     }
   };
 
+  const handleTextSubmit = () => {
+    if (!inputValue.trim()) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    
+    if (!canvas || !ctx) return;
+    
+    // Transform screen coordinates to canvas coordinates
+    const rect = canvas.getBoundingClientRect();
+    const canvasX = (textInputPosition.x - 90 - rect.left - viewport.x) / viewport.zoom;
+    const canvasY = (textInputPosition.y - rect.top - viewport.y) / viewport.zoom;
+    
+    // Add text to data array for persistence
+    const newTextItem: DataItem = {
+      id: Date.now(),
+      shape: 'text',
+      text: inputValue,
+      x: canvasX,
+      y: canvasY
+    };
+    
+    setData(prev => [...prev, newTextItem]);
+    
+    // Hide input and clear value
+    setIsVisible(false);
+    setInputValue('');
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTextSubmit();
+    } else if (e.key === 'Escape') {
+      setIsVisible(false);
+      setInputValue('');
+    }
+  };
+
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    e.preventDefault();
+    
+    if (!canvas || !ctx) return;
+    
+    // Show text input at click position
+    setTextInputPosition({ x: e.clientX + 80, y: e.clientY });
+    setIsVisible(true);
+    setInputValue('');
+    
+    // Focus input after it's rendered
+    setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 0);
+  };
+
   return (
-    <canvas ref={canvasRef} id="canvas" className="bg-white h-screen w-screen"
-    onWheel={handleWheel}
-    onMouseDown={onMouseDown}
-    onMouseMove={onMouseMove}
-    onMouseUp={onMouseUp}
-    />
+    <div className='relative'>
+      <canvas ref={canvasRef} id="canvas" className="bg-white h-screen w-screen"
+      onWheel={handleWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onDoubleClick={onDoubleClick}
+      />
+      {isVisible && (
+        <input
+          ref={textInputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleTextKeyDown}
+          onBlur={handleTextSubmit}
+          style={{
+            position: 'absolute',
+            left: textInputPosition.x,
+            top: textInputPosition.y,
+            transform: 'translate(-50%, -50%)',
+            padding: '2px 4px',
+            border: 'none',
+            outline: 'none',
+            backgroundColor: 'transparent',
+            fontSize: '20px',
+            fontFamily: '"Architects Daughter", cursive, sans-serif',
+            color: 'white',
+            zIndex: 1000
+          }}
+        />
+      )}
+    </div>
   )
 }
 
