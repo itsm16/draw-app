@@ -2,6 +2,7 @@ import rough from 'roughjs'
 import React, { useEffect, useRef, useState } from 'react'
 import { writeText } from '../utils/draw.utils';
 import useToolStore from '../store/toolStore';
+import socket from '../utils/socket.utils';
 
 function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

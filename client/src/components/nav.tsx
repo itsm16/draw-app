@@ -9,7 +9,7 @@ export default function Nav() {
   const {tool, setTool} = useToolStore<{tool: string, setTool: (tool: string) => void}>(state => state)
 
   return (
-    <nav className='flex w-full justify-center items-center my-4 absolute'>
+    <nav className='flex w-full justify-center items-center my-4 absolute z-10'>
         <WrapperDiv>
           <button className={`text-white h-9 w-9 flex items-center justify-center  ${tool === "cursor" ? "hover: bg-[#6861f3]" : "hover:bg-[#6861f3]/40" } rounded-lg ${tool === "cursor" ? "bg-[#6861f3]" : ""}`} onClick={() => setTool("cursor")}>{tool === "cursor" ? <PiCursorFill fillOpacity={0.8} size={20} /> : <PiCursorLight size={20} />}</button>
           <button className={`text-white h-9 w-9 flex items-center justify-center  ${tool === "square" ? "hover: bg-[#6861f3]" : "hover:bg-[#6861f3]/40" } rounded-lg ${tool === "square" ? "bg-[#6861f3]" : ""}`} onClick={() => setTool("square")}>{tool === "square" ? <IoSquare fillOpacity={0.8} size={17} /> : <IoIosSquareOutline size={20} />}</button>
